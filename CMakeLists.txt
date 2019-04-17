@@ -70,3 +70,7 @@ add_library(Catch2::Catch2 ALIAS catch2)
 add_library(Catch2::Main ALIAS catch2_main)
 
 ################################################################################
+
+add_executable(chapter2 chapter2.cpp)
+target_link_libraries(chapter2 Catch2::Main)
+add_test(NAME chapter2 COMMAND chapter2)
