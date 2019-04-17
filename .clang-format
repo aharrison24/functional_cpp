@@ -1,0 +1,23 @@
+﻿---
+Language: Cpp
+BasedOnStyle: Google
+AlignAfterOpenBracket: Align
+AlignEscapedNewlinesLeft: 'false'
+AllowAllParametersOfDeclarationOnNextLine: 'true'
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: 'false'
+AllowShortLoopsOnASingleLine: 'false'
+BinPackArguments: 'true'
+BinPackParameters: 'false'
+DerivePointerAlignment: 'false'
+IndentWrappedFunctionNames: 'true'
+KeepEmptyLinesAtTheStartOfBlocks: 'true'
+PointerAlignment: 'Left'
+ReflowComments: 'false'
+Standard: Cpp11
+---
+Language: Proto
+IndentWidth: 2
+ColumnLimit: 80
+ReflowComments: 'false'
+...
