@@ -3,6 +3,14 @@
 Just messing around with the exercises from the book "Functional Programming in C++" by Ivan Čukić.
 https://www.manning.com/books/functional-programming-in-c-plus-plus
 
+# Building
+
+The project uses submodules for some third-party dependencies, such as Catch2.
+To update the submodules:
+```bash
+git submodule update --init
+```
+
 ### Using pre-commit hooks
 This project uses the [pre-commit](https://pre-commit.com/) tool to lint git
 commits before they are made. Install these as follows:

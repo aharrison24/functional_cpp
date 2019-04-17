@@ -3,6 +3,7 @@ repos:
     rev: master
     hooks:
       - id: clang-format
+        exclude: Catch2
   - repo: https://github.com/jorisroovers/gitlint
     rev:  v0.10.0
     hooks:
