@@ -73,4 +73,5 @@ add_library(Catch2::Main ALIAS catch2_main)
 
 add_executable(chapter2 chapter2.cpp)
 target_link_libraries(chapter2 Catch2::Main)
+target_compile_options(chapter2 PRIVATE "-Wno-padded")
 add_test(NAME chapter2 COMMAND chapter2)
