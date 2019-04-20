@@ -76,6 +76,6 @@ target_link_libraries(chapter2 Catch2::Main)
 target_compile_options(chapter2 PRIVATE "-Wno-padded")
 add_test(NAME chapter2 COMMAND chapter2)
 
-add_executable(chapter3 chapter3.cpp)
+add_executable(chapter3 chapter3_1.cpp)
 target_link_libraries(chapter3 Catch2::Main)
 add_test(NAME chapter3 COMMAND chapter3)
