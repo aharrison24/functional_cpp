@@ -90,27 +90,27 @@ struct arg_t {
   }
 };
 
-template <typename Func>
-struct negate_t {
+template <typename Right, typename Op>
+struct unary_operator_t {
   using operator_type = operator_tag;
 
-  constexpr explicit negate_t(Func f) : f_(std::move(f)) {}
+  constexpr unary_operator_t(Right f, Op op)
+      : f_(std::move(f)), op_(std::move(op)) {}
 
   template <typename... Ts>
   constexpr decltype(auto) operator()(Ts&&... ts) const {
-    return !f_(std::forward<Ts>(ts)...);
+    return op_(f_(std::forward<Ts>(ts)...));
   }
 
  private:
-  Func f_;
+  Right f_;
+  Op op_;
 };
 
-template <typename Func>
-explicit negate_t(Func)->negate_t<Func>;
-
 template <typename T>
-constexpr auto operator!(T t) -> IsOperator<T, negate_t<T>> {
-  return negate_t{t};
+constexpr auto operator!(T t)
+    -> IsOperator<T, unary_operator_t<T, std::logical_not<>>> {
+  return {std::move(t), std::logical_not<>{}};
 }
 
 }  // namespace fcpp
