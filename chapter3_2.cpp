@@ -74,6 +74,10 @@ constexpr decltype(auto) get(Ts&&... ts) noexcept {
 // operators
 namespace fcpp {
 
+using operator_traits::is_operator_v;
+using operator_traits::IsNotOperator;
+using operator_traits::IsOperator;
+
 template <size_t N>
 struct arg_t {
   using operator_type = placeholder_tag;
@@ -85,6 +89,29 @@ struct arg_t {
     return get<N>(ts...);
   }
 };
+
+template <typename Func>
+struct negate_t {
+  using operator_type = operator_tag;
+
+  constexpr explicit negate_t(Func f) : f_(std::move(f)) {}
+
+  template <typename... Ts>
+  constexpr decltype(auto) operator()(Ts&&... ts) const {
+    return !f_(std::forward<Ts>(ts)...);
+  }
+
+ private:
+  Func f_;
+};
+
+template <typename Func>
+explicit negate_t(Func)->negate_t<Func>;
+
+template <typename T>
+constexpr auto operator!(T t) -> IsOperator<T, negate_t<T>> {
+  return negate_t{t};
+}
 
 }  // namespace fcpp
 
@@ -102,6 +129,7 @@ constexpr auto arg = ::fcpp::arg_t<N>{};
 using namespace fcpp;
 using namespace fcpp::args;
 using namespace fcpp::operator_traits;
+namespace stdex = std::experimental;
 
 CATCH_SCENARIO("Placeholders bind to function parameters") {
   static_assert(is_operator_v<arg_t<0>>);
@@ -112,4 +140,24 @@ CATCH_SCENARIO("Placeholders bind to function parameters") {
   static_assert(std::apply(arg<1>, args) == std::get<1>(args));
   static_assert(std::apply(arg<2>, args) == -2);
   static_assert(std::apply(arg<3>, args) == 3);
+}
+
+template <typename T>
+using negate_expression = decltype(!std::declval<T>());
+
+CATCH_SCENARIO("Ensure that Actor overloads don't fire for unrelated types") {
+  struct S {};
+  static_assert(!stdex::is_detected_v<negate_expression, S>);
+}
+
+CATCH_SCENARIO("Bang operator negates bound value") {
+  static_assert(is_operator_v<decltype(arg<0>)>);
+  static_assert(is_operator_v<decltype(!arg<0>)>);
+
+  constexpr auto args = std::make_tuple(false, true, 42, 0);
+
+  static_assert(std::apply(!arg<0>, args));
+  static_assert(!std::apply(!arg<1>, args));
+  static_assert(!std::apply(!arg<2>, args));
+  static_assert(std::apply(!arg<3>, args));
 }
