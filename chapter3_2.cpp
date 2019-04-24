@@ -90,6 +90,22 @@ struct arg_t {
   }
 };
 
+template <typename T>
+struct value_t {
+  using operator_type = operator_tag;
+
+  constexpr explicit value_t(T val) : val_(std::move(val)) {}
+
+  template <typename... Args>
+  constexpr T operator()([[maybe_unused]] Args&&... args) const
+      noexcept(std::is_nothrow_copy_constructible_v<T>) {
+    return val_;
+  }
+
+ private:
+  T val_;
+};
+
 template <typename Right, typename Op>
 struct unary_operator_t {
   using operator_type = operator_tag;
@@ -148,6 +164,11 @@ using negate_expression = decltype(!std::declval<T>());
 CATCH_SCENARIO("Ensure that Actor overloads don't fire for unrelated types") {
   struct S {};
   static_assert(!stdex::is_detected_v<negate_expression, S>);
+}
+
+CATCH_SCENARIO("value_t captures values for later") {
+  static_assert(operator_traits::is_operator_v<value_t<int>>);
+  static_assert(value_t{1234}() == 1234);
 }
 
 CATCH_SCENARIO("Bang operator negates bound value") {
