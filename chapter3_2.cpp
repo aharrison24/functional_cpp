@@ -3,6 +3,7 @@
 #include <experimental/type_traits>
 #include <optional>
 #include <tuple>
+#include <vector>
 
 // -----------------------------------------------------------------------------
 // general traits
@@ -296,4 +297,15 @@ CATCH_SCENARIO("Multiplication operator") {
 CATCH_SCENARIO("Equality operator") {
   static_assert(!(arg<0> == 42)(0));
   static_assert((arg<0> == 42)(42));
+}
+
+CATCH_SCENARIO("Transform with lambda expression") {
+  auto const input = {1, 2, 3, 4, 5};
+
+  std::vector<int> result;
+  std::transform(begin(input), end(input), std::back_inserter(result),
+                 (arg<0> - 1) * (arg<0> - 1));
+
+  auto const expected = {0, 1, 4, 9, 16};
+  CATCH_REQUIRE(std::equal(begin(result), end(result), begin(expected)));
 }
