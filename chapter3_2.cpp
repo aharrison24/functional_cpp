@@ -141,21 +141,18 @@ struct unary_operator_t<Right, Op, std::enable_if_t<is_operator_v<Right>>> {
 template <typename Right, typename Op>
 unary_operator_t(Right, Op)->unary_operator_t<Right, Op>;
 
-template <typename LeftFunc,
-          typename RightFunc,
-          typename BinaryOp,
-          typename Enable>
+template <typename Left, typename Right, typename Op, typename Enable>
 struct binary_operator_t;
 
-template <typename LeftFunc,
-          typename RightFunc,
-          typename BinaryOp,
-          typename = std::enable_if_t<is_operator_v<LeftFunc> &&
-                                      is_operator_v<RightFunc>>>
+template <typename Left,
+          typename Right,
+          typename Op,
+          typename =
+              std::enable_if_t<is_operator_v<Left> && is_operator_v<Right>>>
 struct binary_operator_t {
   using operator_type = operator_tag;
 
-  constexpr binary_operator_t(LeftFunc left, RightFunc right, BinaryOp op)
+  constexpr binary_operator_t(Left left, Right right, Op op)
       : left_(std::move(left)), right_(std::move(right)), op_(std::move(op)) {}
 
   template <typename... Ts>
@@ -164,9 +161,9 @@ struct binary_operator_t {
   }
 
  private:
-  LeftFunc left_;
-  RightFunc right_;
-  BinaryOp op_;
+  Left left_;
+  Right right_;
+  Op op_;
 };
 
 template <typename Left, typename Right, typename Op>
