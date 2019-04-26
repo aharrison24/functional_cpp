@@ -123,6 +123,34 @@ struct unary_operator_t {
   Op op_;
 };
 
+template <typename LeftFunc,
+          typename RightFunc,
+          typename BinaryOp,
+          typename Enable>
+struct binary_operator_t;
+
+template <typename LeftFunc,
+          typename RightFunc,
+          typename BinaryOp,
+          typename = std::enable_if_t<is_operator_v<LeftFunc> &&
+                                      is_operator_v<RightFunc>>>
+struct binary_operator_t {
+  using operator_type = operator_tag;
+
+  constexpr binary_operator_t(LeftFunc left, RightFunc right, BinaryOp op)
+      : left_(std::move(left)), right_(std::move(right)), op_(std::move(op)) {}
+
+  template <typename... Ts>
+  constexpr decltype(auto) operator()(Ts&&... ts) const {
+    return op_(left_(ts...), right_(ts...));
+  }
+
+ private:
+  LeftFunc left_;
+  RightFunc right_;
+  BinaryOp op_;
+};
+
 template <typename T>
 constexpr auto operator!(T t)
     -> IsOperator<T, unary_operator_t<T, std::logical_not<>>> {
