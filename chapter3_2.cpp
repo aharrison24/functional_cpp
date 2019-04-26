@@ -163,6 +163,16 @@ struct binary_operator_t {
   BinaryOp op_;
 };
 
+template <typename Left, typename Right, typename Op>
+constexpr auto make_binary_op(Left&& lhs, Right&& rhs, Op&& op)
+    -> std::enable_if_t<is_operator_v<Left> || is_operator_v<Right>,
+                        binary_operator_t<decltype(to_operator(lhs)),
+                                          decltype(to_operator(rhs)),
+                                          Op>> {
+  return {to_operator(std::forward<Left>(lhs)),
+          to_operator(std::forward<Right>(rhs)), std::forward<Op>(op)};
+}
+
 template <typename T>
 constexpr auto operator!(T t)
     -> IsOperator<T, unary_operator_t<T, std::logical_not<>>> {
@@ -181,12 +191,8 @@ constexpr auto operator+(Left lhs, Right rhs)
 
 template <typename Left, typename Right>
 constexpr auto operator-(Left lhs, Right rhs)
-    -> std::enable_if_t<is_operator_v<Left> || is_operator_v<Right>,
-                        binary_operator_t<decltype(to_operator(lhs)),
-                                          decltype(to_operator(rhs)),
-                                          std::minus<>>> {
-  return {to_operator(std::move(lhs)), to_operator(std::move(rhs)),
-          std::minus<>{}};
+    -> decltype(make_binary_op(lhs, rhs, std::minus<>{})) {
+  return make_binary_op(lhs, rhs, std::minus<>{});
 }
 
 template <typename Left, typename Right>
