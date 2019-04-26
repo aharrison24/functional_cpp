@@ -1,5 +1,6 @@
 #include <catch2/catch.hpp>
 
+#include <array>
 #include <iterator>
 #include <utility>
 
@@ -52,7 +53,7 @@ constexpr auto find_if(ForwardIter first, ForwardIter last, Predicate p) {
 }  // namespace fcpp
 
 template <typename T>
-auto greater_than(T lim) {
+constexpr auto greater_than(T lim) {
   return [lim = std::move(lim)](auto const& v) { return v > lim; };
 }
 
@@ -60,29 +61,31 @@ CATCH_SCENARIO("any_of") {
   CATCH_GIVEN("An empty collection") {
     std::vector<int> input;
     CATCH_THEN("any_of returns false") {
+      // Empty array specialization doesn't have constexpr methods, so this has
+      // to be a run-time check :-(
       CATCH_REQUIRE(!fcpp::any_of(begin(input), end(input), greater_than(5)));
     }
   }
 
   CATCH_GIVEN("A collection containing only items passing the predicate") {
-    std::vector<int> input{6, 7, 8, 9};
+    static constexpr auto input = std::array{6, 7, 8, 9};
     CATCH_THEN("any_of returns true") {
-      CATCH_REQUIRE(fcpp::any_of(begin(input), end(input), greater_than(1)));
+      static_assert(fcpp::any_of(begin(input), end(input), greater_than(1)));
     }
   }
 
   CATCH_GIVEN("A collection containing only items not-passing the predicate") {
-    std::vector<int> input{1, 2, 3, 4};
+    static constexpr auto input = std::array{1, 2, 3, 4};
     CATCH_THEN("any_of returns false") {
-      CATCH_REQUIRE(!fcpp::any_of(begin(input), end(input), greater_than(5)));
+      static_assert(!fcpp::any_of(begin(input), end(input), greater_than(5)));
     }
   }
 
   CATCH_GIVEN(
       "A collection with only a subset of items passing the predicate") {
-    std::vector<int> input{1, 6, 2, 10, 100};
+    static constexpr auto input = std::array{1, 6, 2, 10, 100};
     CATCH_THEN("any_of returns true") {
-      CATCH_REQUIRE(fcpp::any_of(begin(input), end(input), greater_than(5)));
+      static_assert(fcpp::any_of(begin(input), end(input), greater_than(5)));
     }
   }
 }
@@ -96,24 +99,24 @@ CATCH_SCENARIO("all_of") {
   }
 
   CATCH_GIVEN("A collection containing only items passing the predicate") {
-    std::vector<int> input{6, 7, 8, 9};
+    static constexpr auto input = std::array{6, 7, 8, 9};
     CATCH_THEN("all_of returns true") {
-      CATCH_REQUIRE(fcpp::all_of(begin(input), end(input), greater_than(1)));
+      static_assert(fcpp::all_of(begin(input), end(input), greater_than(1)));
     }
   }
 
   CATCH_GIVEN("A collection containing only items not-passing the predicate") {
-    std::vector<int> input{1, 2, 3, 4};
+    static constexpr auto input = std::array{1, 2, 3, 4};
     CATCH_THEN("all_of returns false") {
-      CATCH_REQUIRE(!fcpp::all_of(begin(input), end(input), greater_than(5)));
+      static_assert(!fcpp::all_of(begin(input), end(input), greater_than(5)));
     }
   }
 
   CATCH_GIVEN(
       "A collection with only a subset of items passing the predicate") {
-    std::vector<int> input{1, 6, 2, 10, 100};
+    static constexpr auto input = std::array{1, 6, 2, 10, 100};
     CATCH_THEN("all_of returns false") {
-      CATCH_REQUIRE(!fcpp::all_of(begin(input), end(input), greater_than(5)));
+      static_assert(!fcpp::all_of(begin(input), end(input), greater_than(5)));
     }
   }
 }
@@ -128,18 +131,18 @@ CATCH_SCENARIO("find_if") {
   }
 
   CATCH_GIVEN("A collection containing only items passing the predicate") {
-    std::vector<int> input{6, 7, 8, 9};
+    static constexpr auto input = std::array{6, 7, 8, 9};
     CATCH_THEN("find_if returns an iterator to the first") {
-      CATCH_REQUIRE(fcpp::find_if(begin(input), end(input), greater_than(5)) ==
+      static_assert(fcpp::find_if(begin(input), end(input), greater_than(5)) ==
                     begin(input));
     }
   }
 
   CATCH_GIVEN(
       "A collection where the initial elements don't pass the predicate") {
-    std::vector<int> input{1, 2, 3, 4, 5, 6, 7, 8};
+    static constexpr auto input = std::array{1, 2, 3, 4, 5, 6, 7, 8};
     CATCH_THEN("find_if returns an iterator to the first one that does") {
-      CATCH_REQUIRE(fcpp::find_if(begin(input), end(input), greater_than(5)) ==
+      static_assert(fcpp::find_if(begin(input), end(input), greater_than(5)) ==
                     std::next(begin(input), 5));
     }
   }
