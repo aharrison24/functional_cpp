@@ -178,6 +178,16 @@ constexpr auto operator+(Left lhs, Right rhs)
           std::plus<>{}};
 }
 
+template <typename Left, typename Right>
+constexpr auto operator-(Left lhs, Right rhs)
+    -> std::enable_if_t<is_operator_v<Left> || is_operator_v<Right>,
+                        binary_operator_t<decltype(to_operator(lhs)),
+                                          decltype(to_operator(rhs)),
+                                          std::minus<>>> {
+  return {to_operator(std::move(lhs)), to_operator(std::move(rhs)),
+          std::minus<>{}};
+}
+
 }  // namespace fcpp
 
 // -----------------------------------------------------------------------------
@@ -246,4 +256,15 @@ CATCH_SCENARIO("Plus operator") {
   static_assert(std::apply(arg<0> + arg<1> + arg<2>, args) == 1337);
   static_assert((arg<0> + 122)(1) == 123);
   static_assert(('a' + arg<0>)(2) == 'c');
+}
+
+CATCH_SCENARIO("Minus operator") {
+  static_assert(is_operator_v<decltype(arg<0> - arg<1>)>);
+
+  constexpr auto args = std::make_tuple(5, 42, 1290);
+
+  static_assert(1 - 1 == 0);
+  static_assert(std::apply(arg<0> - arg<0>, args) == 0);
+  static_assert((arg<0> - 122)(1) == -121);
+  static_assert(('c' - arg<0>)(2) == 'a');
 }
