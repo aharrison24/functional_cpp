@@ -181,12 +181,8 @@ constexpr auto operator!(T t)
 
 template <typename Left, typename Right>
 constexpr auto operator+(Left lhs, Right rhs)
-    -> std::enable_if_t<is_operator_v<Left> || is_operator_v<Right>,
-                        binary_operator_t<decltype(to_operator(lhs)),
-                                          decltype(to_operator(rhs)),
-                                          std::plus<>>> {
-  return {to_operator(std::move(lhs)), to_operator(std::move(rhs)),
-          std::plus<>{}};
+    -> decltype(make_binary_op(lhs, rhs, std::plus<>{})) {
+  return make_binary_op(lhs, rhs, std::plus<>{});
 }
 
 template <typename Left, typename Right>
@@ -197,22 +193,14 @@ constexpr auto operator-(Left lhs, Right rhs)
 
 template <typename Left, typename Right>
 constexpr auto operator*(Left lhs, Right rhs)
-    -> std::enable_if_t<is_operator_v<Left> || is_operator_v<Right>,
-                        binary_operator_t<decltype(to_operator(lhs)),
-                                          decltype(to_operator(rhs)),
-                                          std::multiplies<>>> {
-  return {to_operator(std::move(lhs)), to_operator(std::move(rhs)),
-          std::multiplies<>{}};
+    -> decltype(make_binary_op(lhs, rhs, std::multiplies<>{})) {
+  return make_binary_op(lhs, rhs, std::multiplies<>{});
 }
 
 template <typename Left, typename Right>
 constexpr auto operator==(Left lhs, Right rhs)
-    -> std::enable_if_t<is_operator_v<Left> || is_operator_v<Right>,
-                        binary_operator_t<decltype(to_operator(lhs)),
-                                          decltype(to_operator(rhs)),
-                                          std::equal_to<>>> {
-  return {to_operator(std::move(lhs)), to_operator(std::move(rhs)),
-          std::equal_to<>{}};
+    -> decltype(make_binary_op(lhs, rhs, std::equal_to<>{})) {
+  return make_binary_op(lhs, rhs, std::equal_to<>{});
 }
 
 }  // namespace fcpp
