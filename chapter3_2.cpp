@@ -198,6 +198,16 @@ constexpr auto operator*(Left lhs, Right rhs)
           std::multiplies<>{}};
 }
 
+template <typename Left, typename Right>
+constexpr auto operator==(Left lhs, Right rhs)
+    -> std::enable_if_t<is_operator_v<Left> || is_operator_v<Right>,
+                        binary_operator_t<decltype(to_operator(lhs)),
+                                          decltype(to_operator(rhs)),
+                                          std::equal_to<>>> {
+  return {to_operator(std::move(lhs)), to_operator(std::move(rhs)),
+          std::equal_to<>{}};
+}
+
 }  // namespace fcpp
 
 // -----------------------------------------------------------------------------
@@ -281,4 +291,9 @@ CATCH_SCENARIO("Minus operator") {
 
 CATCH_SCENARIO("Multiplication operator") {
   static_assert((arg<0> * arg<1>)(4, 5) == 20);
+}
+
+CATCH_SCENARIO("Equality operator") {
+  static_assert(!(arg<0> == 42)(0));
+  static_assert((arg<0> == 42)(42));
 }
