@@ -135,6 +135,13 @@ struct unary_operator_t {
   Op op_;
 };
 
+template <typename Right, typename Op>
+constexpr auto make_unary_op(Right&& rhs, Op&& op) noexcept
+    -> std::enable_if_t<is_operator_v<Right>,
+                        unary_operator_t<traits::remove_cvref_t<Right>, Op>> {
+  return {to_operator(std::forward<Right>(rhs)), std::forward<Op>(op)};
+}
+
 template <typename LeftFunc,
           typename RightFunc,
           typename BinaryOp,
@@ -173,10 +180,10 @@ constexpr auto make_binary_op(Left&& lhs, Right&& rhs, Op&& op)
           to_operator(std::forward<Right>(rhs)), std::forward<Op>(op)};
 }
 
-template <typename T>
-constexpr auto operator!(T t)
-    -> IsOperator<T, unary_operator_t<T, std::logical_not<>>> {
-  return {std::move(t), std::logical_not<>{}};
+template <typename Right>
+constexpr auto operator!(Right rhs)
+    -> decltype(make_unary_op(rhs, std::logical_not<>{})) {
+  return make_unary_op(rhs, std::logical_not<>{});
 }
 
 template <typename Left, typename Right>
