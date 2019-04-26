@@ -106,6 +106,17 @@ struct value_t {
   T val_;
 };
 
+template <typename T>
+constexpr auto to_operator(T t) noexcept -> IsOperator<T> {
+  return t;
+}
+
+template <typename T>
+constexpr auto to_operator(T&& t)
+    -> IsNotOperator<T, decltype(value_t{std::forward<T>(t)})> {
+  return value_t{std::forward<T>(t)};
+}
+
 template <typename Right, typename Op>
 struct unary_operator_t {
   using operator_type = operator_tag;
@@ -157,6 +168,16 @@ constexpr auto operator!(T t)
   return {std::move(t), std::logical_not<>{}};
 }
 
+template <typename Left, typename Right>
+constexpr auto operator+(Left lhs, Right rhs)
+    -> std::enable_if_t<is_operator_v<Left> || is_operator_v<Right>,
+                        binary_operator_t<decltype(to_operator(lhs)),
+                                          decltype(to_operator(rhs)),
+                                          std::plus<>>> {
+  return {to_operator(std::move(lhs)), to_operator(std::move(rhs)),
+          std::plus<>{}};
+}
+
 }  // namespace fcpp
 
 // -----------------------------------------------------------------------------
@@ -189,9 +210,13 @@ CATCH_SCENARIO("Placeholders bind to function parameters") {
 template <typename T>
 using negate_expression = decltype(!std::declval<T>());
 
+template <typename T, typename U>
+using plus_expression = decltype(std::declval<T>() + std::declval<U>());
+
 CATCH_SCENARIO("Ensure that Actor overloads don't fire for unrelated types") {
   struct S {};
   static_assert(!stdex::is_detected_v<negate_expression, S>);
+  static_assert(!stdex::is_detected_v<plus_expression, S, S>);
 }
 
 CATCH_SCENARIO("value_t captures values for later") {
@@ -209,4 +234,16 @@ CATCH_SCENARIO("Bang operator negates bound value") {
   static_assert(!std::apply(!arg<1>, args));
   static_assert(!std::apply(!arg<2>, args));
   static_assert(std::apply(!arg<3>, args));
+}
+
+CATCH_SCENARIO("Plus operator") {
+  static_assert(is_operator_v<decltype(arg<0> + arg<1>)>);
+
+  constexpr auto args = std::make_tuple(5, 42, 1290);
+
+  static_assert(1 + 1 == 2);
+  static_assert(std::apply(arg<0> + arg<0>, args) == 10);
+  static_assert(std::apply(arg<0> + arg<1> + arg<2>, args) == 1337);
+  static_assert((arg<0> + 122)(1) == 123);
+  static_assert(('a' + arg<0>)(2) == 'c');
 }
