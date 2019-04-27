@@ -152,8 +152,11 @@ template <typename Left,
 struct binary_operator_t {
   using operator_type = operator_tag;
 
-  constexpr binary_operator_t(Left left, Right right, Op op)
-      : left_(std::move(left)), right_(std::move(right)), op_(std::move(op)) {}
+  template <typename T1, typename T2>
+  constexpr binary_operator_t(T1&& left, T2&& right, Op op)
+      : left_(to_operator(std::forward<T1>(left))),
+        right_(to_operator(std::forward<T2>(right))),
+        op_(std::move(op)) {}
 
   template <typename... Ts>
   constexpr decltype(auto) operator()(Ts&&... ts) const {
@@ -165,6 +168,12 @@ struct binary_operator_t {
   Right right_;
   Op op_;
 };
+
+template <typename T1, typename T2, typename Op>
+binary_operator_t(T1&& lhs, T2&& rhs, Op)
+    ->binary_operator_t<decltype(to_operator(std::forward<T1>(lhs))),
+                        decltype(to_operator(std::forward<T2>(rhs))),
+                        Op>;
 
 template <typename Left, typename Right, typename Op>
 constexpr auto make_binary_op(Left&& lhs, Right&& rhs, Op&& op)
