@@ -171,7 +171,7 @@ constexpr auto make_binary_op(Left&& lhs, Right&& rhs, Op&& op)
     -> std::enable_if_t<is_operator_v<Left> || is_operator_v<Right>,
                         binary_operator_t<decltype(to_operator(lhs)),
                                           decltype(to_operator(rhs)),
-                                          Op>> {
+                                          traits::remove_cvref_t<Op>>> {
   return {to_operator(std::forward<Left>(lhs)),
           to_operator(std::forward<Right>(rhs)), std::forward<Op>(op)};
 }
