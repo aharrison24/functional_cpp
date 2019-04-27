@@ -141,14 +141,7 @@ struct unary_operator_t<Right, Op, std::enable_if_t<is_operator_v<Right>>> {
 template <typename Right, typename Op>
 unary_operator_t(Right, Op)->unary_operator_t<Right, Op>;
 
-template <typename Left, typename Right, typename Op, typename Enable>
-struct binary_operator_t;
-
-template <typename Left,
-          typename Right,
-          typename Op,
-          typename =
-              std::enable_if_t<is_operator_v<Left> && is_operator_v<Right>>>
+template <typename Left, typename Right, typename Op>
 struct binary_operator_t {
   using operator_type = operator_tag;
 
