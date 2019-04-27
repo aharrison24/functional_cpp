@@ -145,7 +145,9 @@ template <typename Left, typename Right, typename Op>
 struct binary_operator_t {
   using operator_type = operator_tag;
 
-  template <typename T1, typename T2>
+  template <typename T1,
+            typename T2,
+            typename = std::enable_if_t<is_operator_v<T1> || is_operator_v<T2>>>
   constexpr binary_operator_t(T1&& left, T2&& right, Op op)
       : left_(to_operator(std::forward<T1>(left))),
         right_(to_operator(std::forward<T2>(right))),
@@ -170,10 +172,9 @@ binary_operator_t(T1&& lhs, T2&& rhs, Op)
 
 template <typename Left, typename Right, typename Op>
 constexpr auto make_binary_op(Left&& lhs, Right&& rhs, Op&& op)
-    -> std::enable_if_t<is_operator_v<Left> || is_operator_v<Right>,
-                        decltype(binary_operator_t{std::forward<Left>(lhs),
-                                                   std::forward<Right>(rhs),
-                                                   std::forward<Op>(op)})> {
+    -> decltype(binary_operator_t{std::forward<Left>(lhs),
+                                  std::forward<Right>(rhs),
+                                  std::forward<Op>(op)}) {
   return binary_operator_t{std::forward<Left>(lhs), std::forward<Right>(rhs),
                            std::forward<Op>(op)};
 }
