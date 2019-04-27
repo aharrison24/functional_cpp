@@ -5,12 +5,11 @@
 #include <tuple>
 #include <vector>
 
+namespace stdex = std::experimental;
+
 // -----------------------------------------------------------------------------
 // general traits
 namespace fcpp::traits {
-
-using std::experimental::detected_t;
-using std::experimental::is_detected_v;
 
 template <typename T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
@@ -34,10 +33,11 @@ using placeholder_expr = typename remove_cvref_t<T>::operator_type;
 
 namespace detail {
 
-template <typename T, typename DetectedOpType = detected_t<placeholder_expr, T>>
+template <typename T,
+          typename DetectedOpType = stdex::detected_t<placeholder_expr, T>>
 constexpr bool is_operator() {
   // NOLINTNEXTLINE(readability-braces-around-statements, bugprone-suspicious-semicolon)
-  if constexpr (!is_detected_v<placeholder_expr, T>) {
+  if constexpr (!stdex::is_detected_v<placeholder_expr, T>) {
     return false;
   }
   // NOLINTNEXTLINE(readability-braces-around-statements, bugprone-suspicious-semicolon)
@@ -215,7 +215,6 @@ constexpr auto arg = ::fcpp::arg_t<N>{};
 using namespace fcpp;
 using namespace fcpp::args;
 using namespace fcpp::operator_traits;
-namespace stdex = std::experimental;
 
 CATCH_SCENARIO("Placeholders bind to function parameters") {
   static_assert(is_operator_v<arg_t<0>>);
