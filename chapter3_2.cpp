@@ -171,11 +171,11 @@ binary_operator_t(T1&& lhs, T2&& rhs, Op)
 template <typename Left, typename Right, typename Op>
 constexpr auto make_binary_op(Left&& lhs, Right&& rhs, Op&& op)
     -> std::enable_if_t<is_operator_v<Left> || is_operator_v<Right>,
-                        binary_operator_t<decltype(to_operator(lhs)),
-                                          decltype(to_operator(rhs)),
-                                          traits::remove_cvref_t<Op>>> {
-  return {to_operator(std::forward<Left>(lhs)),
-          to_operator(std::forward<Right>(rhs)), std::forward<Op>(op)};
+                        decltype(binary_operator_t{std::forward<Left>(lhs),
+                                                   std::forward<Right>(rhs),
+                                                   std::forward<Op>(op)})> {
+  return binary_operator_t{std::forward<Left>(lhs), std::forward<Right>(rhs),
+                           std::forward<Op>(op)};
 }
 
 template <typename Right>
