@@ -9,24 +9,18 @@ namespace stdex = std::experimental;
 
 // -----------------------------------------------------------------------------
 // general traits
-namespace fcpp::traits {
+namespace fcpp {
 
 template <typename T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
-}  // namespace fcpp::traits
 
 // -----------------------------------------------------------------------------
 // operator tags
-namespace fcpp {
 struct operator_tag {};
 struct placeholder_tag : operator_tag {};
-}  // namespace fcpp
 
 // -----------------------------------------------------------------------------
 // operator traits
-namespace fcpp::operator_traits {
-
-using namespace fcpp::traits;
 
 template <typename T>
 using placeholder_expr = typename remove_cvref_t<T>::operator_type;
@@ -58,26 +52,16 @@ using IsOperator = std::enable_if_t<is_operator_v<T>>;
 template <typename T>
 using IsNotOperator = std::enable_if_t<!is_operator_v<T>>;
 
-}  // namespace fcpp::operator_traits
-
 // -----------------------------------------------------------------------------
 // util functions
-namespace fcpp {
 
 template <int N, typename... Ts>
 constexpr decltype(auto) get(Ts&&... ts) noexcept {
   return std::get<N>(std::forward_as_tuple(ts...));
 }
 
-}  // namespace fcpp
-
 // -----------------------------------------------------------------------------
 // operators
-namespace fcpp {
-
-using operator_traits::is_operator_v;
-using operator_traits::IsNotOperator;
-using operator_traits::IsOperator;
 
 template <size_t N>
 struct arg_t {
@@ -199,22 +183,17 @@ constexpr auto operator==(Left lhs, Right rhs)
   return binary_operator_t(lhs, rhs, std::equal_to<>{});
 }
 
-}  // namespace fcpp
-
 // -----------------------------------------------------------------------------
 // placeholders
-namespace fcpp::args {
 
 template <int N>
 constexpr auto arg = ::fcpp::arg_t<N>{};
 
-}  // namespace fcpp::args
+}  // namespace fcpp
 
 // -----------------------------------------------------------------------------
 // Tests
 using namespace fcpp;
-using namespace fcpp::args;
-using namespace fcpp::operator_traits;
 
 CATCH_SCENARIO("Placeholders bind to function parameters") {
   static_assert(is_operator_v<arg_t<0>>);
@@ -240,7 +219,7 @@ CATCH_SCENARIO("Ensure that Actor overloads don't fire for unrelated types") {
 }
 
 CATCH_SCENARIO("value_t captures values for later") {
-  static_assert(operator_traits::is_operator_v<value_t<int>>);
+  static_assert(is_operator_v<value_t<int>>);
   static_assert(value_t{1234}() == 1234);
 }
 
