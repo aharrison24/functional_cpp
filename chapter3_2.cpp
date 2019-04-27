@@ -52,11 +52,11 @@ constexpr bool is_operator() {
 template <typename T>
 constexpr bool is_operator_v = detail::is_operator<T>();
 
-template <typename T, typename R = T>
-using IsOperator = std::enable_if_t<is_operator_v<T>, R>;
+template <typename T>
+using IsOperator = std::enable_if_t<is_operator_v<T>>;
 
-template <typename T, typename R = T>
-using IsNotOperator = std::enable_if_t<!is_operator_v<T>, R>;
+template <typename T>
+using IsNotOperator = std::enable_if_t<!is_operator_v<T>>;
 
 }  // namespace fcpp::operator_traits
 
@@ -107,14 +107,13 @@ struct value_t {
   T val_;
 };
 
-template <typename T>
-constexpr auto to_operator(T t) noexcept -> IsOperator<T> {
+template <typename T, typename = IsOperator<T>>
+constexpr auto to_operator(T t) noexcept -> T {
   return t;
 }
 
-template <typename T>
-constexpr auto to_operator(T&& t)
-    -> IsNotOperator<T, decltype(value_t{std::forward<T>(t)})> {
+template <typename T, typename = IsNotOperator<T>>
+constexpr auto to_operator(T&& t) -> decltype(value_t{std::forward<T>(t)}) {
   return value_t{std::forward<T>(t)};
 }
 
