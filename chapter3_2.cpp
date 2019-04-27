@@ -15,27 +15,27 @@ template <typename T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
 // -----------------------------------------------------------------------------
-// operator tags
-struct operator_tag {};
-struct placeholder_tag : operator_tag {};
+// actor tags
+struct actor_tag {};
+struct placeholder_tag : actor_tag {};
 
 // -----------------------------------------------------------------------------
-// operator traits
+// actor traits
 
 template <typename T>
-using placeholder_expr = typename remove_cvref_t<T>::operator_type;
+using placeholder_expr = typename remove_cvref_t<T>::actor_type;
 
 namespace detail {
 
 template <typename T,
           typename DetectedOpType = stdex::detected_t<placeholder_expr, T>>
-constexpr bool is_operator() {
+constexpr bool is_actor() {
   // NOLINTNEXTLINE(readability-braces-around-statements, bugprone-suspicious-semicolon)
   if constexpr (!stdex::is_detected_v<placeholder_expr, T>) {
     return false;
   }
   // NOLINTNEXTLINE(readability-braces-around-statements, bugprone-suspicious-semicolon)
-  if constexpr (!std::is_convertible_v<DetectedOpType, operator_tag>) {
+  if constexpr (!std::is_convertible_v<DetectedOpType, actor_tag>) {
     return false;
   }
 
@@ -44,13 +44,13 @@ constexpr bool is_operator() {
 }  // namespace detail
 
 template <typename T>
-constexpr bool is_operator_v = detail::is_operator<T>();
+constexpr bool is_actor_v = detail::is_actor<T>();
 
 template <typename T>
-using IsOperator = std::enable_if_t<is_operator_v<T>>;
+using IsActor = std::enable_if_t<is_actor_v<T>>;
 
 template <typename T>
-using IsNotOperator = std::enable_if_t<!is_operator_v<T>>;
+using IsNotActor = std::enable_if_t<!is_actor_v<T>>;
 
 // -----------------------------------------------------------------------------
 // util functions
@@ -61,11 +61,11 @@ constexpr decltype(auto) get(Ts&&... ts) noexcept {
 }
 
 // -----------------------------------------------------------------------------
-// operators
+// actors
 
 template <size_t N>
 struct arg_t {
-  using operator_type = placeholder_tag;
+  using actor_type = placeholder_tag;
 
   template <typename... Ts>
   constexpr decltype(auto) operator()(Ts&&... ts) const noexcept {
@@ -77,7 +77,7 @@ struct arg_t {
 
 template <typename T>
 struct value_t {
-  using operator_type = operator_tag;
+  using actor_type = actor_tag;
 
   constexpr explicit value_t(T val) : val_(std::move(val)) {}
 
@@ -91,24 +91,24 @@ struct value_t {
   T val_;
 };
 
-template <typename T, typename = IsOperator<T>>
-constexpr auto to_operator(T t) noexcept -> T {
+template <typename T, typename = IsActor<T>>
+constexpr auto to_actor(T t) noexcept -> T {
   return t;
 }
 
-template <typename T, typename = IsNotOperator<T>>
-constexpr auto to_operator(T&& t) -> decltype(value_t{std::forward<T>(t)}) {
+template <typename T, typename = IsNotActor<T>>
+constexpr auto to_actor(T&& t) -> decltype(value_t{std::forward<T>(t)}) {
   return value_t{std::forward<T>(t)};
 }
 
 template <typename Right, typename Op, typename Enable = void>
-struct unary_operator_t;
+struct unary_actor_t;
 
 template <typename Right, typename Op>
-struct unary_operator_t<Right, Op, std::enable_if_t<is_operator_v<Right>>> {
-  using operator_type = operator_tag;
+struct unary_actor_t<Right, Op, std::enable_if_t<is_actor_v<Right>>> {
+  using actor_type = actor_tag;
 
-  constexpr unary_operator_t(Right f, Op op)
+  constexpr unary_actor_t(Right f, Op op)
       : f_(std::move(f)), op_(std::move(op)) {}
 
   template <typename... Ts>
@@ -122,18 +122,18 @@ struct unary_operator_t<Right, Op, std::enable_if_t<is_operator_v<Right>>> {
 };
 
 template <typename Right, typename Op>
-unary_operator_t(Right, Op)->unary_operator_t<Right, Op>;
+unary_actor_t(Right, Op)->unary_actor_t<Right, Op>;
 
 template <typename Left, typename Right, typename Op>
-struct binary_operator_t {
-  using operator_type = operator_tag;
+struct binary_actor_t {
+  using actor_type = actor_tag;
 
   template <typename T1,
             typename T2,
-            typename = std::enable_if_t<is_operator_v<T1> || is_operator_v<T2>>>
-  constexpr binary_operator_t(T1&& left, T2&& right, Op op)
-      : left_(to_operator(std::forward<T1>(left))),
-        right_(to_operator(std::forward<T2>(right))),
+            typename = std::enable_if_t<is_actor_v<T1> || is_actor_v<T2>>>
+  constexpr binary_actor_t(T1&& left, T2&& right, Op op)
+      : left_(to_actor(std::forward<T1>(left))),
+        right_(to_actor(std::forward<T2>(right))),
         op_(std::move(op)) {}
 
   template <typename... Ts>
@@ -148,39 +148,39 @@ struct binary_operator_t {
 };
 
 template <typename T1, typename T2, typename Op>
-binary_operator_t(T1&& lhs, T2&& rhs, Op)
-    ->binary_operator_t<decltype(to_operator(std::forward<T1>(lhs))),
-                        decltype(to_operator(std::forward<T2>(rhs))),
-                        Op>;
+binary_actor_t(T1&& lhs, T2&& rhs, Op)
+    ->binary_actor_t<decltype(to_actor(std::forward<T1>(lhs))),
+                     decltype(to_actor(std::forward<T2>(rhs))),
+                     Op>;
 
 template <typename Right>
 constexpr auto operator!(Right rhs)
-    -> decltype(unary_operator_t(rhs, std::logical_not<>{})) {
-  return unary_operator_t(rhs, std::logical_not<>{});
+    -> decltype(unary_actor_t(rhs, std::logical_not<>{})) {
+  return unary_actor_t(rhs, std::logical_not<>{});
 }
 
 template <typename Left, typename Right>
 constexpr auto operator+(Left lhs, Right rhs)
-    -> decltype(binary_operator_t(lhs, rhs, std::plus<>{})) {
-  return binary_operator_t(lhs, rhs, std::plus<>{});
+    -> decltype(binary_actor_t(lhs, rhs, std::plus<>{})) {
+  return binary_actor_t(lhs, rhs, std::plus<>{});
 }
 
 template <typename Left, typename Right>
 constexpr auto operator-(Left lhs, Right rhs)
-    -> decltype(binary_operator_t(lhs, rhs, std::minus<>{})) {
-  return binary_operator_t(lhs, rhs, std::minus<>{});
+    -> decltype(binary_actor_t(lhs, rhs, std::minus<>{})) {
+  return binary_actor_t(lhs, rhs, std::minus<>{});
 }
 
 template <typename Left, typename Right>
 constexpr auto operator*(Left lhs, Right rhs)
-    -> decltype(binary_operator_t(lhs, rhs, std::multiplies<>{})) {
-  return binary_operator_t(lhs, rhs, std::multiplies<>{});
+    -> decltype(binary_actor_t(lhs, rhs, std::multiplies<>{})) {
+  return binary_actor_t(lhs, rhs, std::multiplies<>{});
 }
 
 template <typename Left, typename Right>
 constexpr auto operator==(Left lhs, Right rhs)
-    -> decltype(binary_operator_t(lhs, rhs, std::equal_to<>{})) {
-  return binary_operator_t(lhs, rhs, std::equal_to<>{});
+    -> decltype(binary_actor_t(lhs, rhs, std::equal_to<>{})) {
+  return binary_actor_t(lhs, rhs, std::equal_to<>{});
 }
 
 // -----------------------------------------------------------------------------
@@ -196,7 +196,7 @@ constexpr auto arg = ::fcpp::arg_t<N>{};
 using namespace fcpp;
 
 CATCH_SCENARIO("Placeholders bind to function parameters") {
-  static_assert(is_operator_v<arg_t<0>>);
+  static_assert(is_actor_v<arg_t<0>>);
 
   constexpr auto args = std::make_tuple(0UL, "one", -2, std::optional<int>{3});
 
@@ -219,13 +219,13 @@ CATCH_SCENARIO("Ensure that Actor overloads don't fire for unrelated types") {
 }
 
 CATCH_SCENARIO("value_t captures values for later") {
-  static_assert(is_operator_v<value_t<int>>);
+  static_assert(is_actor_v<value_t<int>>);
   static_assert(value_t{1234}() == 1234);
 }
 
 CATCH_SCENARIO("Bang operator negates bound value") {
-  static_assert(is_operator_v<decltype(arg<0>)>);
-  static_assert(is_operator_v<decltype(!arg<0>)>);
+  static_assert(is_actor_v<decltype(arg<0>)>);
+  static_assert(is_actor_v<decltype(!arg<0>)>);
 
   constexpr auto args = std::make_tuple(false, true, 42, 0);
 
@@ -236,7 +236,7 @@ CATCH_SCENARIO("Bang operator negates bound value") {
 }
 
 CATCH_SCENARIO("Plus operator") {
-  static_assert(is_operator_v<decltype(arg<0> + arg<1>)>);
+  static_assert(is_actor_v<decltype(arg<0> + arg<1>)>);
 
   constexpr auto args = std::make_tuple(5, 42, 1290);
 
@@ -248,7 +248,7 @@ CATCH_SCENARIO("Plus operator") {
 }
 
 CATCH_SCENARIO("Minus operator") {
-  static_assert(is_operator_v<decltype(arg<0> - arg<1>)>);
+  static_assert(is_actor_v<decltype(arg<0> - arg<1>)>);
 
   constexpr auto args = std::make_tuple(5, 42, 1290);
 
