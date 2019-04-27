@@ -170,15 +170,6 @@ binary_operator_t(T1&& lhs, T2&& rhs, Op)
                         decltype(to_operator(std::forward<T2>(rhs))),
                         Op>;
 
-template <typename Left, typename Right, typename Op>
-constexpr auto make_binary_op(Left&& lhs, Right&& rhs, Op&& op)
-    -> decltype(binary_operator_t{std::forward<Left>(lhs),
-                                  std::forward<Right>(rhs),
-                                  std::forward<Op>(op)}) {
-  return binary_operator_t{std::forward<Left>(lhs), std::forward<Right>(rhs),
-                           std::forward<Op>(op)};
-}
-
 template <typename Right>
 constexpr auto operator!(Right rhs)
     -> decltype(unary_operator_t(rhs, std::logical_not<>{})) {
@@ -187,26 +178,26 @@ constexpr auto operator!(Right rhs)
 
 template <typename Left, typename Right>
 constexpr auto operator+(Left lhs, Right rhs)
-    -> decltype(make_binary_op(lhs, rhs, std::plus<>{})) {
-  return make_binary_op(lhs, rhs, std::plus<>{});
+    -> decltype(binary_operator_t(lhs, rhs, std::plus<>{})) {
+  return binary_operator_t(lhs, rhs, std::plus<>{});
 }
 
 template <typename Left, typename Right>
 constexpr auto operator-(Left lhs, Right rhs)
-    -> decltype(make_binary_op(lhs, rhs, std::minus<>{})) {
-  return make_binary_op(lhs, rhs, std::minus<>{});
+    -> decltype(binary_operator_t(lhs, rhs, std::minus<>{})) {
+  return binary_operator_t(lhs, rhs, std::minus<>{});
 }
 
 template <typename Left, typename Right>
 constexpr auto operator*(Left lhs, Right rhs)
-    -> decltype(make_binary_op(lhs, rhs, std::multiplies<>{})) {
-  return make_binary_op(lhs, rhs, std::multiplies<>{});
+    -> decltype(binary_operator_t(lhs, rhs, std::multiplies<>{})) {
+  return binary_operator_t(lhs, rhs, std::multiplies<>{});
 }
 
 template <typename Left, typename Right>
 constexpr auto operator==(Left lhs, Right rhs)
-    -> decltype(make_binary_op(lhs, rhs, std::equal_to<>{})) {
-  return make_binary_op(lhs, rhs, std::equal_to<>{});
+    -> decltype(binary_operator_t(lhs, rhs, std::equal_to<>{})) {
+  return binary_operator_t(lhs, rhs, std::equal_to<>{});
 }
 
 }  // namespace fcpp
