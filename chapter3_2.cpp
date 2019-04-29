@@ -94,7 +94,8 @@ struct value_t {
 
 // to_actor converts values to lazily-evaluated function objects
 template <typename T, typename = IsNotActor<T>>
-constexpr auto to_actor(T&& t) -> decltype(value_t{std::forward<T>(t)}) {
+constexpr auto to_actor(T&& t) noexcept
+    -> decltype(value_t{std::forward<T>(t)}) {
   return value_t{std::forward<T>(t)};
 }
 
