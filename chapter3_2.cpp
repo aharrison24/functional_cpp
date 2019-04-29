@@ -133,13 +133,11 @@ template <typename Left, typename Right, typename Op>
 struct binary_actor_t {
   using actor_type = actor_tag;
 
-  template <typename T1,
-            typename T2,
-            typename = std::enable_if_t<is_actor_v<T1> || is_actor_v<T2>>>
-  constexpr binary_actor_t(T1&& left, T2&& right, Op op)
-      : left_(to_actor(std::forward<T1>(left))),
-        right_(to_actor(std::forward<T2>(right))),
-        op_(std::move(op)) {}
+  static_assert(is_actor_v<Left> && is_actor_v<Right>,
+                "Both Left and Right template parameters must be actors");
+
+  constexpr binary_actor_t(Left lhs, Right rhs, Op op)
+      : left_(std::move(lhs)), right_(std::move(rhs)), op_(std::move(op)) {}
 
   template <typename... Ts>
   constexpr decltype(auto) operator()(Ts&&... ts) const {
@@ -152,11 +150,21 @@ struct binary_actor_t {
   Op op_;
 };
 
-template <typename T1, typename T2, typename Op>
-binary_actor_t(T1&& lhs, T2&& rhs, Op)
-    ->binary_actor_t<decltype(to_actor(std::forward<T1>(lhs))),
-                     decltype(to_actor(std::forward<T2>(rhs))),
-                     Op>;
+template <typename Left, typename Right>
+using AtLeastOneActor = std::enable_if_t<is_actor_v<Left> || is_actor_v<Right>>;
+
+template <typename Left,
+          typename Right,
+          typename Op,
+          typename = AtLeastOneActor<Left, Right>>
+constexpr auto make_binary_actor(Left&& lhs, Right&& rhs, Op&& op) noexcept
+    -> decltype(binary_actor_t{to_actor(std::forward<Left>(lhs)),
+                               to_actor(std::forward<Right>(rhs)),
+                               std::forward<Op>(op)}) {
+  return binary_actor_t{to_actor(std::forward<Left>(lhs)),
+                        to_actor(std::forward<Right>(rhs)),
+                        std::forward<Op>(op)};
+}
 
 // -----------------------------------------------------------------------------
 // operators
@@ -169,26 +177,26 @@ constexpr auto operator!(Right rhs)
 
 template <typename Left, typename Right>
 constexpr auto operator+(Left lhs, Right rhs)
-    -> decltype(binary_actor_t(lhs, rhs, std::plus<>{})) {
-  return binary_actor_t(lhs, rhs, std::plus<>{});
+    -> decltype(make_binary_actor(lhs, rhs, std::plus<>{})) {
+  return make_binary_actor(lhs, rhs, std::plus<>{});
 }
 
 template <typename Left, typename Right>
 constexpr auto operator-(Left lhs, Right rhs)
-    -> decltype(binary_actor_t(lhs, rhs, std::minus<>{})) {
-  return binary_actor_t(lhs, rhs, std::minus<>{});
+    -> decltype(make_binary_actor(lhs, rhs, std::minus<>{})) {
+  return make_binary_actor(lhs, rhs, std::minus<>{});
 }
 
 template <typename Left, typename Right>
 constexpr auto operator*(Left lhs, Right rhs)
-    -> decltype(binary_actor_t(lhs, rhs, std::multiplies<>{})) {
-  return binary_actor_t(lhs, rhs, std::multiplies<>{});
+    -> decltype(make_binary_actor(lhs, rhs, std::multiplies<>{})) {
+  return make_binary_actor(lhs, rhs, std::multiplies<>{});
 }
 
 template <typename Left, typename Right>
 constexpr auto operator==(Left lhs, Right rhs)
-    -> decltype(binary_actor_t(lhs, rhs, std::equal_to<>{})) {
-  return binary_actor_t(lhs, rhs, std::equal_to<>{});
+    -> decltype(make_binary_actor(lhs, rhs, std::equal_to<>{})) {
+  return make_binary_actor(lhs, rhs, std::equal_to<>{});
 }
 
 // -----------------------------------------------------------------------------
