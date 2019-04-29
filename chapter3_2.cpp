@@ -106,12 +106,11 @@ constexpr auto to_actor(T t) noexcept -> T {
 }
 
 // -------------------------
-template <typename Right, typename Op, typename Enable = void>
-struct unary_actor_t;
-
 template <typename Right, typename Op>
-struct unary_actor_t<Right, Op, std::enable_if_t<is_actor_v<Right>>> {
+struct unary_actor_t {
   using actor_type = actor_tag;
+
+  static_assert(is_actor_v<Right>, "Right template parameter must be an actor");
 
   constexpr unary_actor_t(Right f, Op op)
       : f_(std::move(f)), op_(std::move(op)) {}
@@ -125,6 +124,12 @@ struct unary_actor_t<Right, Op, std::enable_if_t<is_actor_v<Right>>> {
   Right f_;
   Op op_;
 };
+
+template <typename Right, typename Op, typename = IsActor<Right>>
+constexpr auto make_unary_actor(Right&& rhs, Op&& op) noexcept
+    -> decltype(unary_actor_t{std::forward<Right>(rhs), std::forward<Op>(op)}) {
+  return unary_actor_t{std::forward<Right>(rhs), std::forward<Op>(op)};
+}
 
 template <typename Right, typename Op>
 unary_actor_t(Right, Op)->unary_actor_t<Right, Op>;
@@ -172,8 +177,8 @@ constexpr auto make_binary_actor(Left&& lhs, Right&& rhs, Op&& op) noexcept
 
 template <typename Right>
 constexpr auto operator!(Right rhs)
-    -> decltype(unary_actor_t(rhs, std::logical_not<>{})) {
-  return unary_actor_t(rhs, std::logical_not<>{});
+    -> decltype(make_unary_actor(rhs, std::logical_not<>{})) {
+  return make_unary_actor(rhs, std::logical_not<>{});
 }
 
 template <typename Left, typename Right>
