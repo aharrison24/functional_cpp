@@ -23,15 +23,15 @@ struct placeholder_tag : actor_tag {};
 // actor traits
 
 template <typename T>
-using placeholder_expr = typename remove_cvref_t<T>::actor_type;
+using actor_type_expr = typename remove_cvref_t<T>::actor_type;
 
 namespace detail {
 
 template <typename T,
-          typename DetectedOpType = stdex::detected_t<placeholder_expr, T>>
+          typename DetectedOpType = stdex::detected_t<actor_type_expr, T>>
 constexpr bool is_actor() {
   // NOLINTNEXTLINE(readability-braces-around-statements, bugprone-suspicious-semicolon)
-  if constexpr (!stdex::is_detected_v<placeholder_expr, T>) {
+  if constexpr (!stdex::is_detected_v<actor_type_expr, T>) {
     return false;
   }
   // NOLINTNEXTLINE(readability-braces-around-statements, bugprone-suspicious-semicolon)
