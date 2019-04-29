@@ -75,6 +75,7 @@ struct arg_t {
   }
 };
 
+// -------------------------
 template <typename T>
 struct value_t {
   using actor_type = actor_tag;
@@ -91,16 +92,19 @@ struct value_t {
   T val_;
 };
 
-template <typename T, typename = IsActor<T>>
-constexpr auto to_actor(T t) noexcept -> T {
-  return t;
-}
-
+// to_actor converts values to lazily-evaluated function objects
 template <typename T, typename = IsNotActor<T>>
 constexpr auto to_actor(T&& t) -> decltype(value_t{std::forward<T>(t)}) {
   return value_t{std::forward<T>(t)};
 }
 
+// If passed an existing actor then the function is a no-op.
+template <typename T, typename = IsActor<T>>
+constexpr auto to_actor(T t) noexcept -> T {
+  return t;
+}
+
+// -------------------------
 template <typename Right, typename Op, typename Enable = void>
 struct unary_actor_t;
 
@@ -124,6 +128,7 @@ struct unary_actor_t<Right, Op, std::enable_if_t<is_actor_v<Right>>> {
 template <typename Right, typename Op>
 unary_actor_t(Right, Op)->unary_actor_t<Right, Op>;
 
+// -------------------------
 template <typename Left, typename Right, typename Op>
 struct binary_actor_t {
   using actor_type = actor_tag;
@@ -152,6 +157,9 @@ binary_actor_t(T1&& lhs, T2&& rhs, Op)
     ->binary_actor_t<decltype(to_actor(std::forward<T1>(lhs))),
                      decltype(to_actor(std::forward<T2>(rhs))),
                      Op>;
+
+// -----------------------------------------------------------------------------
+// operators
 
 template <typename Right>
 constexpr auto operator!(Right rhs)
