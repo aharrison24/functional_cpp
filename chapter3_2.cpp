@@ -205,6 +205,18 @@ constexpr auto operator==(Left lhs, Right rhs)
   return make_binary_actor(lhs, rhs, std::equal_to<>{});
 }
 
+template <typename Left, typename Right>
+constexpr auto operator<(Left lhs, Right rhs)
+    -> decltype(make_binary_actor(lhs, rhs, std::less<>{})) {
+  return make_binary_actor(lhs, rhs, std::less<>{});
+}
+
+template <typename Left, typename Right>
+constexpr auto operator<=(Left lhs, Right rhs)
+    -> decltype(make_binary_actor(lhs, rhs, std::less_equal<>{})) {
+  return make_binary_actor(lhs, rhs, std::less_equal<>{});
+}
+
 // -----------------------------------------------------------------------------
 // placeholders
 
@@ -287,6 +299,18 @@ CATCH_SCENARIO("Multiplication operator") {
 CATCH_SCENARIO("Equality operator") {
   static_assert(!(arg<0> == 42)(0));
   static_assert((arg<0> == 42)(42));
+}
+
+CATCH_SCENARIO("Less-than operator") {
+  static_assert((arg<0> < 5)(4));
+  static_assert(!(arg<0> < 5)(6));
+  static_assert((arg<0> < arg<1>)(0, 100));
+  static_assert(!(arg<0> < arg<1>)(10, 10));
+}
+
+CATCH_SCENARIO("Less-than-or-equal operator") {
+  static_assert((arg<0> <= arg<1>)(0, 100));
+  static_assert((arg<0> <= arg<1>)(10, 10));
 }
 
 CATCH_SCENARIO("Transform with lambda expression") {
