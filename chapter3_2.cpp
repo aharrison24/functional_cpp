@@ -193,6 +193,7 @@ class dynamic_actor_t<R(Args...)> {
  private:
   struct concept_t {
     virtual R invoke(Args&&... args) const = 0;
+    virtual std::unique_ptr<concept_t> clone() const = 0;
     virtual ~concept_t() = default;
   };
 
@@ -200,6 +201,10 @@ class dynamic_actor_t<R(Args...)> {
   struct model_t : concept_t {
     template <typename A>
     explicit model_t(A&& actor) : actor_(std::forward<A>(actor)) {}
+
+    std::unique_ptr<concept_t> clone() const override {
+      return std::make_unique<model_t<Actor>>(actor_);
+    }
 
     R invoke(Args&&... args) const override {
       // Using std::move because Args&&... are *not* forwarding references,
@@ -215,6 +220,18 @@ class dynamic_actor_t<R(Args...)> {
   explicit dynamic_actor_t(Actor&& actor)
       : ptr_(std::make_unique<model_t<remove_cvref_t<Actor>>>(
             std::forward<Actor>(actor))) {}
+
+  ~dynamic_actor_t() = default;
+  dynamic_actor_t(dynamic_actor_t const& rhs) : ptr_(rhs.ptr_->clone()) {}
+  dynamic_actor_t(dynamic_actor_t&&) = default;
+  dynamic_actor_t& operator=(dynamic_actor_t&&) = default;
+
+  dynamic_actor_t& operator=(dynamic_actor_t const& rhs) {
+    dynamic_actor_t temp(rhs);
+    using std::swap;
+    swap(this->ptr_, temp.ptr_);
+    return *this;
+  }
 
   R operator()(Args... args) const {
     // Args are captured by value and unconditionally moved. We have to capture
@@ -380,10 +397,28 @@ CATCH_SCENARIO("Type erasure for actors") {
 
     CATCH_THEN("we can erase it's type with a call to erase_type") {
       auto dynamic_actor = erase_type<int(int)>(std::move(actor));
+      static_assert(
+          std::is_same_v<decltype(dynamic_actor), dynamic_actor_t<int(int)>>);
 
       CATCH_REQUIRE(dynamic_actor(10) == 1000);
       CATCH_AND_THEN("we can also use it in further actor expressions") {
-        auto aggregated_actor = !std::move(dynamic_actor);
+        auto aggregated_actor = !dynamic_actor;
+        CATCH_REQUIRE(aggregated_actor(10) == false);
+      }
+    }
+    CATCH_GIVEN("A pair of type-erased actors") {
+      auto dynamic1 = erase_type<int(int)>(arg<0> + 5);
+      auto dynamic2 = erase_type<int(int)>(arg<0> - 5);
+
+      CATCH_THEN("we can re-bind a dynamic actor via copy assignment") {
+        dynamic2 = dynamic1;
+        CATCH_REQUIRE(dynamic1(10) == 15);
+        CATCH_REQUIRE(dynamic2(10) == 15);
+      }
+
+      CATCH_THEN("we can re-bind a dynamic actor via move assignment") {
+        dynamic1 = std::move(dynamic2);
+        CATCH_REQUIRE(dynamic1(10) == 5);
       }
     }
   }
