@@ -94,14 +94,13 @@ struct value_t {
 
 // to_actor converts values to lazily-evaluated function objects
 template <typename T, typename = IsNotActor<T>>
-constexpr auto to_actor(T&& t) noexcept
-    -> decltype(value_t{std::forward<T>(t)}) {
-  return value_t{std::forward<T>(t)};
+constexpr auto to_actor(T&& t) noexcept -> value_t<remove_cvref_t<T>> {
+  return value_t<remove_cvref_t<T>>{std::forward<T>(t)};
 }
 
 // If passed an existing actor then the function is a no-op.
 template <typename T, typename = IsActor<T>>
-constexpr auto to_actor(T t) noexcept -> T {
+constexpr auto to_actor(T t) noexcept -> remove_cvref_t<T> {
   return t;
 }
 
