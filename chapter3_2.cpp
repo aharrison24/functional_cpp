@@ -174,45 +174,63 @@ constexpr auto make_binary_actor(Left&& lhs, Right&& rhs, Op&& op) noexcept
 // operators
 
 template <typename Right>
-constexpr auto operator!(Right rhs)
-    -> decltype(make_unary_actor(rhs, std::logical_not<>{})) {
-  return make_unary_actor(rhs, std::logical_not<>{});
+constexpr auto operator!(Right&& rhs) -> decltype(
+    make_unary_actor(std::forward<Right>(rhs), std::logical_not<>{})) {
+  return make_unary_actor(std::forward<Right>(rhs), std::logical_not<>{});
 }
 
 template <typename Left, typename Right>
-constexpr auto operator+(Left lhs, Right rhs)
-    -> decltype(make_binary_actor(lhs, rhs, std::plus<>{})) {
-  return make_binary_actor(lhs, rhs, std::plus<>{});
+constexpr auto operator+(Left&& lhs, Right&& rhs)
+    -> decltype(make_binary_actor(std::forward<Left>(lhs),
+                                  std::forward<Right>(rhs),
+                                  std::plus<>{})) {
+  return make_binary_actor(std::forward<Left>(lhs), std::forward<Right>(rhs),
+                           std::plus<>{});
 }
 
 template <typename Left, typename Right>
-constexpr auto operator-(Left lhs, Right rhs)
-    -> decltype(make_binary_actor(lhs, rhs, std::minus<>{})) {
-  return make_binary_actor(lhs, rhs, std::minus<>{});
+constexpr auto operator-(Left&& lhs, Right&& rhs)
+    -> decltype(make_binary_actor(std::forward<Left>(lhs),
+                                  std::forward<Right>(rhs),
+                                  std::minus<>{})) {
+  return make_binary_actor(std::forward<Left>(lhs), std::forward<Right>(rhs),
+                           std::minus<>{});
 }
 
 template <typename Left, typename Right>
-constexpr auto operator*(Left lhs, Right rhs)
-    -> decltype(make_binary_actor(lhs, rhs, std::multiplies<>{})) {
-  return make_binary_actor(lhs, rhs, std::multiplies<>{});
+constexpr auto operator*(Left&& lhs, Right&& rhs)
+    -> decltype(make_binary_actor(std::forward<Left>(lhs),
+                                  std::forward<Right>(rhs),
+                                  std::multiplies<>{})) {
+  return make_binary_actor(std::forward<Left>(lhs), std::forward<Right>(rhs),
+                           std::multiplies<>{});
 }
 
 template <typename Left, typename Right>
-constexpr auto operator==(Left lhs, Right rhs)
-    -> decltype(make_binary_actor(lhs, rhs, std::equal_to<>{})) {
-  return make_binary_actor(lhs, rhs, std::equal_to<>{});
+constexpr auto operator==(Left&& lhs, Right&& rhs)
+    -> decltype(make_binary_actor(std::forward<Left>(lhs),
+                                  std::forward<Right>(rhs),
+                                  std::equal_to<>{})) {
+  return make_binary_actor(std::forward<Left>(lhs), std::forward<Right>(rhs),
+                           std::equal_to<>{});
 }
 
 template <typename Left, typename Right>
-constexpr auto operator<(Left lhs, Right rhs)
-    -> decltype(make_binary_actor(lhs, rhs, std::less<>{})) {
-  return make_binary_actor(lhs, rhs, std::less<>{});
+constexpr auto operator<(Left&& lhs, Right&& rhs)
+    -> decltype(make_binary_actor(std::forward<Left>(lhs),
+                                  std::forward<Right>(rhs),
+                                  std::less<>{})) {
+  return make_binary_actor(std::forward<Left>(lhs), std::forward<Right>(rhs),
+                           std::less<>{});
 }
 
 template <typename Left, typename Right>
-constexpr auto operator<=(Left lhs, Right rhs)
-    -> decltype(make_binary_actor(lhs, rhs, std::less_equal<>{})) {
-  return make_binary_actor(lhs, rhs, std::less_equal<>{});
+constexpr auto operator<=(Left&& lhs, Right&& rhs)
+    -> decltype(make_binary_actor(std::forward<Left>(lhs),
+                                  std::forward<Right>(rhs),
+                                  std::less_equal<>{})) {
+  return make_binary_actor(std::forward<Left>(lhs), std::forward<Right>(rhs),
+                           std::less_equal<>{});
 }
 
 // -----------------------------------------------------------------------------
