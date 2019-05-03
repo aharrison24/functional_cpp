@@ -109,10 +109,9 @@ template <typename Right, typename Op>
 struct unary_actor_t {
   using actor_type = actor_tag;
 
-  static_assert(is_actor_v<Right>, "Right template parameter must be an actor");
-
-  constexpr unary_actor_t(Right f, Op op)
-      : f_(std::move(f)), op_(std::move(op)) {}
+  template <typename Right_, typename Op_, typename = IsActor<Right_>>
+  constexpr unary_actor_t(Right_&& f, Op_&& op)
+      : f_(std::forward<Right_>(f)), op_(std::forward<Op_>(op)) {}
 
   template <typename... Ts>
   constexpr decltype(auto) operator()(Ts&&... ts) const {
@@ -126,12 +125,9 @@ struct unary_actor_t {
 
 template <typename Right, typename Op, typename = IsActor<Right>>
 constexpr auto make_unary_actor(Right&& rhs, Op&& op) noexcept
-    -> decltype(unary_actor_t{std::forward<Right>(rhs), std::forward<Op>(op)}) {
-  return unary_actor_t{std::forward<Right>(rhs), std::forward<Op>(op)};
+    -> unary_actor_t<remove_cvref_t<Right>, remove_cvref_t<Op>> {
+  return {std::forward<Right>(rhs), std::forward<Op>(op)};
 }
-
-template <typename Right, typename Op>
-unary_actor_t(Right, Op)->unary_actor_t<Right, Op>;
 
 // -------------------------
 template <typename Left, typename Right, typename Op>
