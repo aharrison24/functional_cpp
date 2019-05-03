@@ -18,6 +18,7 @@ using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 // actor tags
 struct actor_tag {};
 struct placeholder_tag : actor_tag {};
+struct dynamic_actor_tag : actor_tag {};
 
 // -----------------------------------------------------------------------------
 // actor traits
@@ -47,10 +48,18 @@ template <typename T>
 constexpr bool is_actor_v = detail::is_actor<T>();
 
 template <typename T>
+constexpr bool is_dynamic_actor_v =
+    stdex::is_detected_exact_v<dynamic_actor_tag, actor_type_expr, T>;
+
+template <typename T>
 using IsActor = std::enable_if_t<is_actor_v<T>>;
 
 template <typename T>
 using IsNotActor = std::enable_if_t<!is_actor_v<T>>;
+
+template <typename T>
+using IsNonDynamicActor =
+    std::enable_if_t<is_actor_v<T> && !is_dynamic_actor_v<T>>;
 
 // -----------------------------------------------------------------------------
 // util functions
@@ -168,6 +177,61 @@ constexpr auto make_binary_actor(Left&& lhs, Right&& rhs, Op&& op) noexcept
                       remove_cvref_t<Op>> {
   return {to_actor(std::forward<Left>(lhs)), to_actor(std::forward<Right>(rhs)),
           std::forward<Op>(op)};
+}
+
+// -----------------------------------------------------------------------------
+// type erasure
+
+template <typename R, typename... Args>
+class dynamic_actor_t;
+
+template <typename R, typename... Args>
+class dynamic_actor_t<R(Args...)> {
+ public:
+  using actor_type = dynamic_actor_tag;
+
+ private:
+  struct concept_t {
+    virtual R invoke(Args&&... args) const = 0;
+    virtual ~concept_t() = default;
+  };
+
+  template <typename Actor>
+  struct model_t : concept_t {
+    template <typename A>
+    explicit model_t(A&& actor) : actor_(std::forward<A>(actor)) {}
+
+    R invoke(Args&&... args) const override {
+      // Using std::move because Args&&... are *not* forwarding references,
+      // but rvalue references.
+      return std::invoke(actor_, std::move(args)...);
+    }
+
+    Actor actor_;
+  };
+
+ public:
+  template <typename Actor, typename = IsNonDynamicActor<Actor>>
+  explicit dynamic_actor_t(Actor&& actor)
+      : ptr_(std::make_unique<model_t<remove_cvref_t<Actor>>>(
+            std::forward<Actor>(actor))) {}
+
+  R operator()(Args... args) const {
+    // Args are captured by value and unconditionally moved. We have to capture
+    // by value *somewhere* because virtual methods don't allow perfect
+    // forwarding. We therefore choose to capture by value in the public API so
+    // that callers can see that it's happening. After this the args are always
+    // moved unconditionally.
+    return ptr_->invoke(std::move(args)...);
+  }
+
+ private:
+  std::unique_ptr<concept_t> ptr_;
+};
+
+template <typename FuncPrototype, typename Actor>
+auto erase_type(Actor&& actor) noexcept -> dynamic_actor_t<FuncPrototype> {
+  return dynamic_actor_t<FuncPrototype>{std::forward<Actor>(actor)};
 }
 
 // -----------------------------------------------------------------------------
@@ -306,4 +370,43 @@ CATCH_SCENARIO("Transform with lambda expression") {
 
   auto const expected = {0, 1, 4, 9, 16};
   CATCH_REQUIRE(std::equal(begin(result), end(result), begin(expected)));
+}
+
+CATCH_SCENARIO("Type erasure for actors") {
+  CATCH_GIVEN("An actor with a complicated static type") {
+    auto actor = arg<0> * 100;
+
+    static_assert(is_actor_v<decltype(actor)>);
+
+    CATCH_THEN("we can erase it's type with a call to erase_type") {
+      auto dynamic_actor = erase_type<int(int)>(std::move(actor));
+
+      CATCH_REQUIRE(dynamic_actor(10) == 1000);
+      CATCH_AND_THEN("we can also use it in further actor expressions") {
+        auto aggregated_actor = !std::move(dynamic_actor);
+      }
+    }
+  }
+
+  CATCH_GIVEN("A vector of type-erased actors") {
+    std::vector<dynamic_actor_t<bool(int, int)>> actors;
+    actors.emplace_back(arg<0> + arg<1> < 42);
+    actors.emplace_back(value_t(false));
+    actors.emplace_back(arg<0> * arg<0> == 100);
+
+    CATCH_AND_GIVEN("a set of arguments") {
+      constexpr auto args = std::make_tuple(10, 10);
+
+      CATCH_THEN("we can apply each of the actors to the arguments") {
+        std::vector<bool> results;
+        std::transform(
+            begin(actors), end(actors), std::back_inserter(results),
+            [&args](auto const& actor) { return std::apply(actor, args); });
+
+        std::vector<bool> expected{true, false, true};
+        using Catch::Matchers::Equals;
+        CATCH_REQUIRE_THAT(results, Equals(expected));
+      }
+    }
+  }
 }
