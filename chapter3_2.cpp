@@ -134,11 +134,15 @@ template <typename Left, typename Right, typename Op>
 struct binary_actor_t {
   using actor_type = actor_tag;
 
-  static_assert(is_actor_v<Left> && is_actor_v<Right>,
-                "Both Left and Right template parameters must be actors");
-
-  constexpr binary_actor_t(Left lhs, Right rhs, Op op)
-      : left_(std::move(lhs)), right_(std::move(rhs)), op_(std::move(op)) {}
+  template <
+      typename Left_,
+      typename Right_,
+      typename Op_,
+      typename = std::enable_if_t<is_actor_v<Left_> && is_actor_v<Right_>>>
+  constexpr binary_actor_t(Left_&& lhs, Right_&& rhs, Op_&& op)
+      : left_(std::forward<Left_>(lhs)),
+        right_(std::forward<Right_>(rhs)),
+        op_(std::forward<Op_>(op)) {}
 
   template <typename... Ts>
   constexpr decltype(auto) operator()(Ts&&... ts) const {
@@ -159,12 +163,11 @@ template <typename Left,
           typename Op,
           typename = AtLeastOneActor<Left, Right>>
 constexpr auto make_binary_actor(Left&& lhs, Right&& rhs, Op&& op) noexcept
-    -> decltype(binary_actor_t{to_actor(std::forward<Left>(lhs)),
-                               to_actor(std::forward<Right>(rhs)),
-                               std::forward<Op>(op)}) {
-  return binary_actor_t{to_actor(std::forward<Left>(lhs)),
-                        to_actor(std::forward<Right>(rhs)),
-                        std::forward<Op>(op)};
+    -> binary_actor_t<decltype(to_actor(std::forward<Left>(lhs))),
+                      decltype(to_actor(std::forward<Right>(rhs))),
+                      remove_cvref_t<Op>> {
+  return {to_actor(std::forward<Left>(lhs)), to_actor(std::forward<Right>(rhs)),
+          std::forward<Op>(op)};
 }
 
 // -----------------------------------------------------------------------------
