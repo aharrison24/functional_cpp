@@ -173,65 +173,33 @@ constexpr auto make_binary_actor(Left&& lhs, Right&& rhs, Op&& op) noexcept
 // -----------------------------------------------------------------------------
 // operators
 
-template <typename Right>
-constexpr auto operator!(Right&& rhs) -> decltype(
-    make_unary_actor(std::forward<Right>(rhs), std::logical_not<>{})) {
-  return make_unary_actor(std::forward<Right>(rhs), std::logical_not<>{});
-}
+#define FCPP_ADD_UNARY_OP(op_name, function_obj)                               \
+  template <typename Right>                                                    \
+  constexpr auto op_name(Right&& rhs)                                          \
+      ->decltype(make_unary_actor(std::forward<Right>(rhs), function_obj)) {   \
+    return make_unary_actor(std::forward<Right>(rhs), function_obj);           \
+  }
 
-template <typename Left, typename Right>
-constexpr auto operator+(Left&& lhs, Right&& rhs)
-    -> decltype(make_binary_actor(std::forward<Left>(lhs),
-                                  std::forward<Right>(rhs),
-                                  std::plus<>{})) {
-  return make_binary_actor(std::forward<Left>(lhs), std::forward<Right>(rhs),
-                           std::plus<>{});
-}
+#define FCPP_ADD_BINARY_OP(op_name, function_obj)                              \
+  template <typename Left, typename Right>                                     \
+  constexpr auto op_name(Left&& lhs, Right&& rhs)                              \
+      ->decltype(make_binary_actor(std::forward<Left>(lhs),                    \
+                                   std::forward<Right>(rhs), function_obj)) {  \
+    return make_binary_actor(std::forward<Left>(lhs),                          \
+                             std::forward<Right>(rhs), function_obj);          \
+  }
 
-template <typename Left, typename Right>
-constexpr auto operator-(Left&& lhs, Right&& rhs)
-    -> decltype(make_binary_actor(std::forward<Left>(lhs),
-                                  std::forward<Right>(rhs),
-                                  std::minus<>{})) {
-  return make_binary_actor(std::forward<Left>(lhs), std::forward<Right>(rhs),
-                           std::minus<>{});
-}
+FCPP_ADD_UNARY_OP(operator!, std::logical_not<>{})
 
-template <typename Left, typename Right>
-constexpr auto operator*(Left&& lhs, Right&& rhs)
-    -> decltype(make_binary_actor(std::forward<Left>(lhs),
-                                  std::forward<Right>(rhs),
-                                  std::multiplies<>{})) {
-  return make_binary_actor(std::forward<Left>(lhs), std::forward<Right>(rhs),
-                           std::multiplies<>{});
-}
+FCPP_ADD_BINARY_OP(operator+, std::plus<>{})
+FCPP_ADD_BINARY_OP(operator-, std::minus<>{})
+FCPP_ADD_BINARY_OP(operator*, std::multiplies<>{})
+FCPP_ADD_BINARY_OP(operator==, std::equal_to<>{})
+FCPP_ADD_BINARY_OP(operator<, std::less<>{})
+FCPP_ADD_BINARY_OP(operator<=, std::less_equal<>{})
 
-template <typename Left, typename Right>
-constexpr auto operator==(Left&& lhs, Right&& rhs)
-    -> decltype(make_binary_actor(std::forward<Left>(lhs),
-                                  std::forward<Right>(rhs),
-                                  std::equal_to<>{})) {
-  return make_binary_actor(std::forward<Left>(lhs), std::forward<Right>(rhs),
-                           std::equal_to<>{});
-}
-
-template <typename Left, typename Right>
-constexpr auto operator<(Left&& lhs, Right&& rhs)
-    -> decltype(make_binary_actor(std::forward<Left>(lhs),
-                                  std::forward<Right>(rhs),
-                                  std::less<>{})) {
-  return make_binary_actor(std::forward<Left>(lhs), std::forward<Right>(rhs),
-                           std::less<>{});
-}
-
-template <typename Left, typename Right>
-constexpr auto operator<=(Left&& lhs, Right&& rhs)
-    -> decltype(make_binary_actor(std::forward<Left>(lhs),
-                                  std::forward<Right>(rhs),
-                                  std::less_equal<>{})) {
-  return make_binary_actor(std::forward<Left>(lhs), std::forward<Right>(rhs),
-                           std::less_equal<>{});
-}
+#undef FCPP_ADD_BINARY_OP
+#undef FCPP_ADD_UNARY_OP
 
 // -----------------------------------------------------------------------------
 // placeholders
