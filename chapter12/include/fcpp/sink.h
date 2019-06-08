@@ -28,11 +28,26 @@ class sink_impl {
   Function function_;
 };
 
+template <typename Function>
+struct sink_builder {
+  Function f;
+};
 }  // namespace detail
 
 template <typename Sender, typename Function>
 auto sink(Sender&& sender, Function&& f) {
   return detail::sink_impl<remove_cvref_t<Sender>, std::decay_t<Function>>(
       std::forward<Sender>(sender), std::forward<Function>(f));
+}
+
+template <typename Function>
+auto sink(Function&& f) {
+  return detail::sink_builder<std::decay_t<Function>>{
+      std::forward<Function>(f)};
+}
+
+template <typename Sender, typename Function>
+auto operator|(Sender&& sender, detail::sink_builder<Function> builder) {
+  return sink(std::forward<Sender>(sender), std::move(builder.f));
 }
 }  // namespace fcpp

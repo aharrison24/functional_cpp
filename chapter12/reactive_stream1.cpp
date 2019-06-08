@@ -16,7 +16,8 @@ auto print_message = [](auto const& message) {
 int main() {
   asio::io_service event_loop;
 
-  auto pipeline = sink(service(event_loop), print_message);
+  auto pipeline = service(event_loop)  //
+                  | sink(print_message);
 
   event_loop.run();
 }
