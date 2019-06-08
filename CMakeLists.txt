@@ -23,7 +23,7 @@ set_property(CACHE CMAKE_BUILD_TYPE
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "" FORCE)
 
-project(functional_cpp)
+project(functional_cpp CXX)
 include(CTest)
 
 if(MSVC)
@@ -41,6 +41,9 @@ else()
     )
   endif()
 endif()
+
+################################################################################
+find_package(Boost REQUIRED system)
 
 ################################################################################
 # Catch2 targets
@@ -72,11 +75,13 @@ add_library(Catch2::Main ALIAS catch2_main)
 ################################################################################
 
 add_executable(chapter2 chapter2.cpp)
-target_link_libraries(chapter2 Catch2::Main)
+target_link_libraries(chapter2 PRIVATE Catch2::Main)
 target_compile_options(chapter2 PRIVATE "-Wno-padded")
 add_test(NAME chapter2 COMMAND chapter2)
 
 add_executable(chapter3 chapter3_1.cpp chapter3_2.cpp)
-target_link_libraries(chapter3 Catch2::Main)
+target_link_libraries(chapter3 PRIVATE Catch2::Main)
 target_compile_options(chapter3 PRIVATE "-Wno-padded")
 add_test(NAME chapter3 COMMAND chapter3)
+
+add_subdirectory(chapter12)
