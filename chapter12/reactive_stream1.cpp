@@ -21,9 +21,9 @@ auto print_message = [](auto&& message) {
 int main() {
   asio::io_service event_loop;
 
-  auto pipeline =
-      transform(service(event_loop), OVERLOAD_SET(boost::to_upper_copy))  //
-      | sink(print_message);
+  auto pipeline = service(event_loop)                              //
+                  | transform(OVERLOAD_SET(boost::to_upper_copy))  //
+                  | sink(print_message);
 
   event_loop.run();
 }

@@ -35,6 +35,11 @@ class transform_impl {
   Function function_;
   std::function<void(OutputMessage&&)> emit_;
 };
+
+template <typename Function>
+struct transform_builder {
+  Function f;
+};
 }  // namespace detail
 
 template <typename Sender, typename Function>
@@ -42,4 +47,17 @@ auto transform(Sender&& sender, Function&& f) {
   return detail::transform_impl<remove_cvref_t<Sender>, std::decay_t<Function>>(
       std::forward<Sender>(sender), std::forward<Function>(f));
 }
+
+template <typename Function>
+auto transform(Function&& f) {
+  return detail::transform_builder<std::decay_t<Function>>{
+      std::forward<Function>(f)};
+}
+
+template <typename Sender, typename Function>
+auto operator|(Sender&& sender, detail::transform_builder<Function> builder) {
+  return transform(std::forward<Sender>(sender),
+                   std::forward<Function>(std::move(builder.f)));
+}
+
 }  // namespace fcpp
