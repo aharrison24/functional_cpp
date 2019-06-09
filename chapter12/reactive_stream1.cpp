@@ -27,9 +27,9 @@ bool is_greeting(std::string const& s) {
 int main() {
   asio::io_service event_loop;
 
-  auto pipeline = filter(service(event_loop) |
-                             transform(OVERLOAD_SET(boost::to_upper_copy)),
-                         is_greeting)  //
+  auto pipeline = service(event_loop)                              //
+                  | transform(OVERLOAD_SET(boost::to_upper_copy))  //
+                  | filter(is_greeting)                            //
                   | sink(print_message);
 
   event_loop.run();

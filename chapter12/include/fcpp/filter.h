@@ -36,12 +36,29 @@ class filter_impl {
   Predicate predicate_;
   std::function<void(Message&&)> emit_;
 };
+
+template <typename Predicate>
+struct filter_builder {
+  Predicate p;
+};
+
 }  // namespace detail
 
 template <typename Sender, typename Predicate>
 auto filter(Sender&& sender, Predicate&& p) {
   return detail::filter_impl<remove_cvref_t<Sender>, std::decay_t<Predicate>>(
       std::forward<Sender>(sender), std::forward<Predicate>(p));
+}
+
+template <typename Predicate>
+auto filter(Predicate&& p) {
+  return detail::filter_builder<std::decay_t<Predicate>>{
+      std::forward<Predicate>(p)};
+}
+
+template <typename Sender, typename Predicate>
+auto operator|(Sender&& sender, detail::filter_builder<Predicate> builder) {
+  return filter(std::forward<Sender>(sender), std::move(builder.p));
 }
 
 }  // namespace fcpp
