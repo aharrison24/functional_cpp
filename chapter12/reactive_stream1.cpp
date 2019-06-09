@@ -3,6 +3,7 @@
 #include "fcpp/sink.h"
 #include "fcpp/source.h"
 #include "fcpp/transform.h"
+#include "fcpp/values.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -13,6 +14,7 @@ using fcpp::filter;
 using fcpp::service;
 using fcpp::sink;
 using fcpp::transform;
+using fcpp::values;
 
 namespace {
 auto print_message = [](auto&& message) {
@@ -21,6 +23,10 @@ auto print_message = [](auto&& message) {
 
 bool is_greeting(std::string const& s) {
   return boost::iequals(s, "HELLO");
+}
+
+bool is_even(int v) {
+  return v % 2 == 0;
 }
 }  // namespace
 
@@ -31,6 +37,11 @@ int main() {
                   | transform(OVERLOAD_SET(boost::to_upper_copy))  //
                   | filter(is_greeting)                            //
                   | sink(print_message);
+
+  auto pipeline2 = values{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}      //
+                   | transform([](auto v) { return v * 3; })  //
+                   | filter(is_even)                          //
+                   | sink(print_message);
 
   event_loop.run();
 }
