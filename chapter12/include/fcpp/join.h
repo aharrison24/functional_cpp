@@ -35,12 +35,23 @@ class join_impl {
   std::function<void(OutputMessage&&)> emit_;
 };
 
+struct join_builder {};
+
 }  // namespace detail
 
 template <typename Sender>
 auto join(Sender&& sender) {
   return detail::join_impl<remove_cvref_t<Sender>>(
       std::forward<Sender>(sender));
+}
+
+inline auto join() {
+  return detail::join_builder{};
+}
+
+template <typename Sender>
+auto operator|(Sender&& sender, detail::join_builder) {
+  return join(std::forward<Sender>(sender));
 }
 
 }  // namespace fcpp
