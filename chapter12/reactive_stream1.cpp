@@ -1,4 +1,5 @@
 #include "fcpp/filter.h"
+#include "fcpp/join.h"
 #include "fcpp/macros.h"
 #include "fcpp/sink.h"
 #include "fcpp/source.h"
@@ -38,10 +39,11 @@ int main() {
                   | filter(is_greeting)                            //
                   | sink(print_message);
 
-  auto pipeline2 = values{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}      //
-                   | transform([](auto v) { return v * 3; })  //
-                   | filter(is_even)                          //
-                   | sink(print_message);
+  auto pipeline2 =
+      join(values{values{1, 2, 3}, values{4, 5, 6}, values{7, 8, 9, 10}})  //
+      | transform([](auto v) { return v * 3; })                            //
+      | filter(is_even)                                                    //
+      | sink(print_message);
 
   event_loop.run();
 }
