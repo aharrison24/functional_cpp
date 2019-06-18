@@ -40,6 +40,7 @@ auto sink(Sender&& sender, Function&& f) {
       std::forward<Sender>(sender), std::forward<Function>(f));
 }
 
+namespace operators {
 template <typename Function>
 auto sink(Function&& f) {
   return detail::sink_builder<std::decay_t<Function>>{
@@ -50,4 +51,5 @@ template <typename Sender, typename Function>
 auto operator|(Sender&& sender, detail::sink_builder<Function> builder) {
   return sink(std::forward<Sender>(sender), std::move(builder.f));
 }
+}  // namespace operators
 }  // namespace fcpp

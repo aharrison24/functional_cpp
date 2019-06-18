@@ -45,6 +45,7 @@ auto join(Sender&& sender) {
       std::forward<Sender>(sender));
 }
 
+namespace operators {
 inline auto join() {
   return detail::join_builder{};
 }
@@ -53,5 +54,5 @@ template <typename Sender>
 auto operator|(Sender&& sender, detail::join_builder) {
   return join(std::forward<Sender>(sender));
 }
-
+}  // namespace operators
 }  // namespace fcpp

@@ -48,6 +48,7 @@ auto transform(Sender&& sender, Function&& f) {
       std::forward<Sender>(sender), std::forward<Function>(f));
 }
 
+namespace operators {
 template <typename Function>
 auto transform(Function&& f) {
   return detail::transform_builder<std::decay_t<Function>>{
@@ -59,5 +60,5 @@ auto operator|(Sender&& sender, detail::transform_builder<Function> builder) {
   return transform(std::forward<Sender>(sender),
                    std::forward<Function>(std::move(builder.f)));
 }
-
+}  // namespace operators
 }  // namespace fcpp

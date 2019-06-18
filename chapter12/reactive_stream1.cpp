@@ -11,12 +11,6 @@
 #include <iostream>
 
 namespace asio = boost::asio;
-using fcpp::filter;
-using fcpp::join;
-using fcpp::service;
-using fcpp::sink;
-using fcpp::transform;
-using fcpp::values;
 
 namespace {
 auto print_message = [](auto&& message) {
@@ -33,6 +27,9 @@ bool is_even(int v) {
 }  // namespace
 
 int main() {
+  using namespace fcpp::operators;
+  using fcpp::service, fcpp::values;
+
   asio::io_service event_loop;
 
   auto pipeline = service(event_loop)                              //

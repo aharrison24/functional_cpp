@@ -50,6 +50,7 @@ auto filter(Sender&& sender, Predicate&& p) {
       std::forward<Sender>(sender), std::forward<Predicate>(p));
 }
 
+namespace operators {
 template <typename Predicate>
 auto filter(Predicate&& p) {
   return detail::filter_builder<std::decay_t<Predicate>>{
@@ -60,5 +61,5 @@ template <typename Sender, typename Predicate>
 auto operator|(Sender&& sender, detail::filter_builder<Predicate> builder) {
   return filter(std::forward<Sender>(sender), std::move(builder.p));
 }
-
+}  // namespace operators
 }  // namespace fcpp
