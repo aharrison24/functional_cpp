@@ -18,7 +18,7 @@ auto print_message = [](auto&& message) {
 };
 
 bool is_greeting(std::string const& s) {
-  return boost::iequals(s, "HELLO");
+  return boost::iequals(s, "HELLO") || boost::iequals(s, "HOLA");
 }
 
 bool is_even(int v) {
@@ -32,7 +32,8 @@ int main() {
 
   asio::io_service event_loop;
 
-  auto pipeline = service(event_loop)                              //
+  auto const source_strings = {"Hello", "Goodbye", "Hola"};
+  auto pipeline = service(event_loop, source_strings)              //
                   | transform(OVERLOAD_SET(boost::to_upper_copy))  //
                   | filter(is_greeting)                            //
                   | sink(print_message);

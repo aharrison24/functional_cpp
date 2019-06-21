@@ -6,6 +6,7 @@
 #include <functional>
 #include <random>
 #include <string>
+#include <vector>
 
 namespace fcpp {
 
@@ -13,7 +14,9 @@ class service {
  public:
   using value_type = std::string;
 
-  service(boost::asio::io_service& io_service) : timer_(io_service) {}
+  template <typename Range>
+  service(boost::asio::io_service& io_service, Range const& outputs)
+      : outputs_(begin(outputs), end(outputs)), timer_(io_service) {}
 
   void set_message_handler(std::function<void(std::string&&)> emit) {
     emit_ = std::move(emit);
@@ -26,16 +29,17 @@ class service {
     timer_.expires_from_now(boost::posix_time::milliseconds(500));
     timer_.async_wait([this](auto const& error) {
       if (!error) {
-        emit_(decision_(random_generator_) ? "Hello"s : "Goodbye"s);
+        std::uniform_int_distribution<std::size_t> decision{0, outputs_.size()};
+        emit_(std::string{outputs_[decision(random_generator_)]});
       }
       start_sending();
     });
   }
 
  private:
+  std::vector<std::string> outputs_;
   boost::asio::deadline_timer timer_;
   std::mt19937 random_generator_{std::random_device{}()};
-  std::uniform_int_distribution<> decision_{0, 1};
   std::function<void(std::string&&)> emit_;
 };
 
