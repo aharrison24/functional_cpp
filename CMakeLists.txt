@@ -73,6 +73,16 @@ add_library(Catch2::Catch2 ALIAS catch2)
 add_library(Catch2::Main ALIAS catch2_main)
 
 ################################################################################
+# Targets for expected library
+add_library(expected INTERFACE)
+target_include_directories(expected
+  SYSTEM INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/expected
+)
+
+add_library(TL::expected ALIAS expected)
+
+################################################################################
 
 add_executable(chapter2 chapter2.cpp)
 target_link_libraries(chapter2 PRIVATE Catch2::Main)
