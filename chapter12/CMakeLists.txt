@@ -4,6 +4,7 @@ target_link_libraries(reactive_streams
   INTERFACE
     Boost::boost
     Boost::system
+    TL::expected
 )
 target_include_directories(reactive_streams
   INTERFACE
