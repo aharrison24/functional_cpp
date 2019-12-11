@@ -1,3 +1,4 @@
+#include "fcpp/expected_utils.h"
 #include "fcpp/filter.h"
 #include "fcpp/join.h"
 #include "fcpp/macros.h"
@@ -61,7 +62,8 @@ int main() {
                   | transform([](std::string const& s) {
                       return mtry([&] { return xenophobic_identity(s); });
                     })  //
-                  | sink(OVERLOAD_SET(print_message));
+                  | transform([](auto const& s) { return transform() }) |
+                  sink(OVERLOAD_SET(print_message));
 
   auto pipeline2 = values{values{1, 2, 3}, values{4, 5, 6}, values{7, 8, 9}}  //
                    | join()                                                   //
